@@ -24,8 +24,8 @@ export default {
   actions: {
     async login({ commit }, credentials) {
       try {
-        const { data: token } = await api.post("/auth/login", credentials);
-        commit("SET_TOKEN", token);
+        const token = await api.post("/auth/login", credentials);
+        commit("SET_TOKEN", token.data);
         return true;
       } catch (error) {
         commit("CLEAR_AUTH");

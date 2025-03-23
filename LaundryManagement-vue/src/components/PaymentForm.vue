@@ -48,7 +48,7 @@
       <div v-if="paymentMethod === 'UPI'" class="col-12">
         <label class="form-label">UPI ID</label>
         <input
-          v-model="paymentDetails.upiId"
+          v-model="paymentDetails.upi"
           class="form-control"
           placeholder="example@upi"
         />
@@ -84,9 +84,20 @@ export default {
       this.paymentDetails = {};
     },
     submitPayment() {
+      let paymentString = "";
+      if (this.isCardPayment) {
+        paymentString = `${this.paymentDetails.cardNumber || ""}|${
+          this.paymentDetails.expiry || ""
+        }|${this.paymentDetails.cvv || ""}`;
+      } else if (this.paymentMethod === "UPI") {
+        paymentString = this.paymentDetails.upi || "";
+      } else {
+        paymentString = this.paymentDetails.bankName || "";
+      }
+
       this.$emit("payment-submit", {
         method: this.paymentMethod,
-        details: this.paymentDetails,
+        details: paymentString,
       });
     },
   },

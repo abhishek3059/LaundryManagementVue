@@ -5,7 +5,7 @@ import Register from "@/views/Register.vue";
 import ServicesPage from "@/views/ServicesPage.vue";
 import OrderCreationPage from "@/views/OrderCreationPage.vue";
 import AdminDashboard from "@/views/AdminDashboard.vue";
-import store from "@/store";
+import OrderSuccess from "@/views/orderSuccess.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -24,6 +24,18 @@ const routes = [
     component: AdminDashboard,
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: "/order-success/:username",
+    name: "orderSuccess",
+    component: OrderSuccess,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/admindashboard",
+    name: "Admin Dashboard",
+    component: AdminDashboard,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ];
 
 const router = createRouter({
@@ -31,15 +43,15 @@ const router = createRouter({
   routes,
 });
 // Minimal router guard
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const hasToken = !!localStorage.getItem("jwtToken");
+// router.beforeEach((to, from, next) => {
+//   const requiresAuth = to.meta.requiresAuth;
+//   const hasToken = !!localStorage.getItem("jwtToken");
 
-  if (requiresAuth && !hasToken) {
-    next("/login");
-  } else {
-    next();
-  }
-});
+//   if (requiresAuth && !hasToken) {
+//     next("/login");
+//   } else {
+//     next();
+//   }
+// });
 
 export default router;

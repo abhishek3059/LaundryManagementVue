@@ -10,7 +10,7 @@
       </select>
     </div>
 
-    <table class="table table-hover">
+    <table class="table table-hover" v-if="!loading">
       <thead>
         <tr>
           <th>Order #</th>
@@ -23,11 +23,11 @@
       <tbody>
         <tr v-for="order in filteredOrders" :key="order.id">
           <td>{{ order.orderNumber }}</td>
-          <td>{{ order.customer.name }}</td>
+          <td>{{ order.customer.username }}</td>
           <td>
-            <select v-model="order.orderStatus" @change="updateStatus(order)">
+            <select v-model="order.orderStatus" @change="updateOrder(order)">
               <option
-                v-for="status in orderStatuses"
+                v-for="status in availableStatuses(order.orderStatus)"
                 :value="status"
                 :key="status"
               >
@@ -44,11 +44,14 @@
         </tr>
       </tbody>
     </table>
+    <div v-else class="text-center">Loading...</div>
+    <div v-if="error" class="text-danger text-center">{{ error }}</div>
   </div>
 </template>
 
 <script>
 import { toast } from "vue3-toastify";
+import { mapActions } from "vuex";
 
 export default {
   data() {
@@ -62,10 +65,12 @@ export default {
         "COMPLETED",
         "DELIVERED",
       ],
+      loading: false,
+      error: null,
     };
   },
   async mounted() {
-    this.orders = await this.fetchOrders();
+    await this.fetchOrders();
   },
   computed: {
     filteredOrders() {
@@ -74,18 +79,44 @@ export default {
     },
   },
   methods: {
+    ...mapActions("order", ["fetchOrdersFromBackend", "updateOrderStatus"]),
     formatStatus(status) {
       return status.charAt(0) + status.slice(1).toLowerCase();
     },
-    async updateStatus(order) {
+    async fetchOrders() {
+      this.loading = true;
+      this.error = null;
       try {
-        await axios.put(`/api/orders/${order.id}/status`, {
-          status: order.orderStatus,
-        });
+        await this.fetchOrdersFromBackend();
+        this.orders = this.$store.getters["order/ordersList"];
+        console.log(this.orders);
+      } catch (error) {
+        this.error = "Failed to fetch orders.";
+        toast.error("Error fetching orders");
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateOrder(order) {
+      console.log("order : in update order \n" + order);
+      try {
+        console.log("inside admin dashboard update status call");
+        await this.updateOrderStatus();
+        await this.fetchOrders();
         toast.success("Status updated successfully");
       } catch (error) {
         toast.error("Error updating status");
       }
+    },
+    viewDetails(order) {
+      //implementation for viewDetails.
+    },
+    availableStatuses(currentStatus) {
+      const currIndex = this.orderStatuses.indexOf(currentStatus);
+      if (currIndex === -1 || currIndex === this.orders.length - 1) {
+        return [];
+      }
+      return [this.orderStatuses[currIndex + 1]];
     },
   },
 };
