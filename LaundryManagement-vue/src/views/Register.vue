@@ -127,7 +127,7 @@
 <script>
 import { mapState } from "vuex"; // Import the Role object
 import api from "@/utils/api";
-import jwtDecoder from "@/utils/jwt-decoder";
+import jwtDecoder from "@/utils/jwtDecoder";
 import { toast } from "vue3-toastify";
 
 export default {
@@ -149,7 +149,6 @@ export default {
     ...mapState(["user"]),
   },
   created() {
-    console.log("Role Object:", Role);
     this.checkAdmin();
   },
   methods: {

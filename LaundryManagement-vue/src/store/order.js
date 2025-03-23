@@ -1,8 +1,9 @@
 import api from "@/utils/api";
+import { toast } from "vue3-toastify";
 
 const state = {
   currentOrder: null,
-  orders: [],
+  orders: {}, // Normalized state: { [orderId]: order }
   statuses: ["PENDING", "PROCESSING", "COMPLETED", "DELIVERED"],
 };
 
@@ -10,34 +11,55 @@ const mutations = {
   SET_CURRENT_ORDER(state, order) {
     state.currentOrder = order;
   },
-  ADD_ORDER(state, order) {
-    state.orders.push(order);
+  SET_ORDERS(state, orders) {
+    state.orders = orders.reduce((acc, order) => {
+      acc[order.id] = order;
+      return acc;
+    }, {});
   },
-  UPDATE_ORDER_STATUS(state, { orderId, status }) {
-    const order = state.orders.find((o) => o.id === orderId);
-    if (order) order.status = status;
+  UPDATE_ORDER(state, order) {
+    state.orders[order.id] = order;
   },
 };
 
 const actions = {
   async createOrder({ commit }, orderData) {
     try {
-      const response = await api.post("/api/orders", orderData);
-      commit("ADD_ORDER", response.data);
+      const response = await api.post("/orders", orderData);
       commit("SET_CURRENT_ORDER", response.data);
       return response.data;
     } catch (error) {
+      toast.error(error.response.data.message || "Failed to create order");
       throw error.response.data;
     }
   },
-  async updateOrderStatus({ commit }, { orderId, status }) {
+  async fetchOrdersFromBackend({ commit }) {
     try {
-      await api.put(`/api/orders/${orderId}/status`, { status });
-      commit("UPDATE_ORDER_STATUS", { orderId, status });
+      const response = await api.get("/orders/get-orders");
+      commit("SET_ORDERS", response.data);
+      return response;
     } catch (error) {
-      throw error.response.data;
+      toast.error("Failed to fetch orders");
+      throw error;
     }
   },
+  async updateOrderStatus({ commit }, orderId, status) {
+    try {
+      const response = await api.put(
+        `/orders/${orderId}/status?status=${status}`
+      );
+      console.log("inside update order" + response.data);
+      commit("UPDATE_ORDER", response.data);
+      return response.data;
+    } catch (error) {
+      toast.error("Failed to update order status");
+      throw error;
+    }
+  },
+};
+
+const getters = {
+  ordersList: (state) => Object.values(state.orders),
 };
 
 export default {
@@ -45,4 +67,5 @@ export default {
   state,
   mutations,
   actions,
+  getters,
 };
